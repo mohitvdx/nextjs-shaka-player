@@ -1,66 +1,71 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-const shaka = require('shaka-player/dist/shaka-player.ui.js');
+import React from "react";
+import PropTypes from "prop-types";
+const shaka = require("shaka-player/dist/shaka-player.ui.js");
 
-class Tutorial extends React.PureComponent{
+class Tutorial extends React.PureComponent {
+  constructor(props) {
+    super(props);
 
-    constructor(props){
+    this.video = React.createRef();
+    this.videoContainer = React.createRef();
+  }
 
-        super(props);
+  componentDidMount() {
+    var manifestUri = this.props.manifestUrl;
+    var licenseServer = this.props.licenseServer;
 
-        this.video = React.createRef();
-        this.videoContainer = React.createRef();
-    }
+    let video = this.video.current;
+    let videoContainer = this.videoContainer.current;
 
-    componentDidMount(){
+    var player = new shaka.Player(video);
 
-        var manifestUri = this.props.manifestUrl;
-        var licenseServer = this.props.licenseServer;
-        
-        let video = this.video.current;
-        let videoContainer = this.videoContainer.current;
+    const ui = new shaka.ui.Overlay(player, videoContainer, video);
+    const controls = ui.getControls();
 
-        var player = new shaka.Player(video);
+    console.log(Object.keys(shaka.ui));
 
-        const ui = new shaka.ui.Overlay(player, videoContainer, video);
-        const controls = ui.getControls();
+    player.configure({
+      drm: {
+        servers: { "com.widevine.alpha": licenseServer },
+      },
+    });
 
-        console.log(Object.keys(shaka.ui));
+    const onError = (error) => {
+      // Log the error.
+      console.error("Error code", error.code, "object", error);
+    };
 
-        player.configure({
-            drm: {
-              servers: { 'com.widevine.alpha': licenseServer }
-            }
-          });
+    player
+      .load(manifestUri)
+      .then(function () {
+        // This runs if the asynchronous load is successful.
+        console.log("The video has now been loaded!");
+      })
+      .catch(onError); // onError is executed if the asynchronous load fails.
+  }
 
-
-        const onError = (error) => {
-            // Log the error.
-            console.error('Error code', error.code, 'object', error);
-        }
-
-        player.load(manifestUri).then(function() {
-            // This runs if the asynchronous load is successful.
-            console.log('The video has now been loaded!');
-          }).catch(onError);  // onError is executed if the asynchronous load fails.
-    }
-
-    render(){
-
-        return(
-            <div className="shadow-lg mx-auto max-w-full" ref={this.videoContainer} style={{"width": "800px"}}>
-            <video id="video" ref={this.video} className="w-full h-full"
-            poster={this.props.posterUrl}></video>
-            </div>
-        );
-
-    }
+  render() {
+    return (
+      <div
+        className="shadow-lg mx-auto max-w-full"
+        ref={this.videoContainer}
+        style={{ width: "800px" }}
+      >
+        <video
+          id="video"
+          ref={this.video}
+          className="w-full h-full"
+          poster={this.props.posterUrl}
+        ></video>
+      </div>
+    );
+  }
 }
 
 Tutorial.propTypes = {
-    licenseServer: PropTypes.string,
-    manifestUrl: PropTypes.string,
-    posterUrl: PropTypes.string
-}
+  licenseServer: PropTypes.string,
+  manifestUrl: PropTypes.string,
+  posterUrl: PropTypes.string,
+};
 
 export default Tutorial;
